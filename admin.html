@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin • SMANSAconfess</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --card: #ffffff;
+      --text: #222;
+      --text-secondary: #666;
+      --primary: #003366;
+      --accent: #e91e63;
+      --border: #e0e0e0;
+      --shadow: rgba(0, 0, 0, 0.08);
+    }
+
+    .dark {
+      --bg: #121212;
+      --card: #1e1e1e;
+      --text: #f0f0f0;
+      --text-secondary: #aaa;
+      --border: #333;
+      --shadow: rgba(0, 0, 0, 0.2);
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f0f2f5;
+      color: var(--text);
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 1rem 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .theme-toggle {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.3rem;
+      cursor: pointer;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 3rem auto;
+      padding: 0 1rem;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 1.8rem;
+      color: var(--primary);
+      margin-bottom: 2rem;
+      font-weight: 600;
+    }
+
+    .refresh-btn {
+      display: inline-block;
+      padding: 0.7rem 1.5rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-bottom: 1.5rem;
+    }
+
+    .pending-item {
+      background: white;
+      padding: 1.5rem;
+      margin-bottom: 1.2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      border: 1px solid #e0e0e0;
+    }
+
+    .pending-text {
+      font-size: 1.1rem;
+      margin-bottom: 0.8rem;
+      line-height: 1.6;
+    }
+
+    .meta {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 1rem;
+    }
+
+    .pending-actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .btn {
+      padding: 0.7rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .btn-approve {
+      background: #4caf50;
+      color: white;
+    }
+
+    .btn-reject {
+      background: #f44336;
+      color: white;
+    }
+
+    .empty {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+      padding: 2rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+      font-size: 0.9rem;
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body class="dark">
+
+  <header>
+    <h1>🔐 Admin • SMANSAconfess</h1>
+    <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+  </header>
+
+  <div class="container">
+    <h2 class="section-title">📋 Antrean Curhatan (Moderasi)</h2>
+
+    <button onclick="refreshAdmin()" class="refresh-btn">🔁 Muat Ulang Antrean</button>
+
+    <div id="pending-questions">
+      <!-- Pesan akan muncul di sini -->
+    </div>
+    <p id="no-pending" class="empty">Tidak ada curhatan menunggu moderasi.</p>
+  </div>
+
+  <footer>
+    <p>Admin Panel • SMANSAconfess • SMAN 1 Poigar</p>
+  </footer>
+
+  <script>
+    sessionStorage.setItem('admin', 'true');
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+      localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+    }
+
+    function refreshAdmin() {
+      loadPendingQuestions();
+      alert("Antrean curhatan berhasil dimuat ulang.");
+    }
+
+    function loadPendingQuestions() {
+      const container = document.getElementById('pending-questions');
+      const noPending = document.getElementById('no-pending');
+      const pending = JSON.parse(localStorage.getItem('smansacon_fess_pending') || '[]');
+
+      container.innerHTML = '';
+      if (pending.length === 0) {
+        noPending.style.display = 'block';
+      } else {
+        noPending.style.display = 'none';
+        pending.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'pending-item';
+          div.innerHTML = `
+            <p class="pending-text"><strong>[${capitalize(item.kategori)}]</strong> "${item.text}"</p>
+            <p class="meta">🕒 ${item.time} | 👤 ${item.sender}</p>
+            <div class="pending-actions">
+              <button class="btn btn-approve" onclick="approve(${item.id})">✅ Setujui</button>
+              <button class="btn btn-reject" onclick="reject(${item.id})">❌ Tolak</button>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      }
+    }
+
+    function approve(id) {
+      const pending = JSON.parse(localStorage.getItem('smansacon_fess_pending') || '[]');
+      const approved = JSON.parse(localStorage.getItem('smansacon_fess_approved') || '[]');
+      const msg = pending.find(m => m.id === id);
+      if (msg) {
+        approved.push(msg);
+        localStorage.setItem('smansacon_fess_approved', JSON.stringify(approved));
+        localStorage.setItem('smansacon_fess_pending', JSON.stringify(pending.filter(m => m.id !== id)));
+        loadPendingQuestions();
+        alert("Curhatan disetujui!");
+      }
+    }
+
+    function reject(id) {
+      const pending = JSON.parse(localStorage.getItem('smansacon_fess_pending') || '[]');
+      localStorage.setItem('smansacon_fess_pending', JSON.stringify(pending.filter(m => m.id !== id)));
+      loadPendingQuestions();
+      alert("Curhatan ditolak.");
+    }
+
+    function capitalize(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    window.onload = function() {
+      if (localStorage.getItem('theme') === 'light') {
+        document.body.classList.remove('dark');
+      } else {
+        document.body.classList.add('dark');
+      }
+      loadPendingQuestions();
+    };
+  </script>
+</body>
+</html>
